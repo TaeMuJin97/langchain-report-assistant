@@ -90,7 +90,12 @@ class RagPipeline:
         try:
             meter.reserve('model'); start=perf_counter()
             # TODO B-08: RunnableLambda에서 prepared의 question/query/context를 추출한 뒤 | RAG_PROMPT | model로 연결하세요. chain.invoke(prepared)의 AIMessage를 message에 저장하세요.
-            raise ServiceError('NOT_IMPLEMENTED','B-08')
+            chain = (
+                RunnableLambda(lambda data: {key: data[key] for key in ('question', 'query', 'context')})
+                | RAG_PROMPT
+                | model
+            )
+            message = chain.invoke(prepared)
             # END TODO B-08
             meter.record('rag_generation',start,getattr(message,'usage_metadata',None))
         except Exception as exc:

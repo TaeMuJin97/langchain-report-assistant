@@ -23,7 +23,11 @@ class E5:
                     raise ServiceError('GPU_UNAVAILABLE')
                 start=perf_counter()
                 # TODO B-04: self.model.encode에 query: 접두어가 붙은 문자열을 전달하고 normalize_embeddings=True를 지정하세요. ndarray를 list로 변환하세요.
-                raise ServiceError('NOT_IMPLEMENTED','B-04')
+                vector = self.model.encode(
+                    'query: ' + query,
+                    normalize_embeddings=True,
+                    convert_to_numpy=True,
+                ).tolist()
                 # END TODO B-04
                 meter.record('query_embedding',start)
                 if len(vector)!=384 or not all(math.isfinite(x) for x in vector) or abs(sum(x*x for x in vector)-1)>0.01:
