@@ -8,6 +8,19 @@ def require_cuda():
     return 'cuda:0'
 
 def preflight(settings, repo):
-    # TODO B-02: repo.preflight()와 require_cuda()의 결과를 얻으세요. 유효 벡터 0 및 키/모델 미설정은 ServiceError. 상태 dict에 gpu, embedding_model, reranker_model, llm=configured 등을 담아 반환하세요.
-    raise ServiceError('NOT_IMPLEMENTED','B-02')
-    # END TODO B-02
+    # BEGIN B-02
+    state = repo.preflight()
+    gpu = require_cuda()
+    if not state['eligible_vectors']:
+        raise ServiceError('EMBEDDING_UNAVAILABLE', 'no_eligible_vectors')
+    if not settings.llm_configured:
+        raise ServiceError('LLM_UNAVAILABLE', 'not_configured')
+    return {
+        **state,
+        'gpu': gpu,
+        'embedding_model': settings.embedding_model,
+        'reranker_model': settings.reranker_model,
+        'llm': 'configured',
+        'llm_live_verified': False,
+    }
+    # END B-02
