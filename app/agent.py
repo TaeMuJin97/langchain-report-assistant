@@ -30,9 +30,10 @@ SYSTEM = """
 - incomplete: 일부 업무만 수행했거나 완료하지 못한 경우
 
 [출처 규칙]
-- 실제 RAG Tool에서 반환된 출처만 사용한다. 본문에 [RPT-번호] 형식으로 인용한다.
-- 본문에 인용한 출처와 source_ids는 정확히 일치해야 한다.
-- 상태 조회만 수행한 경우 source_ids는 빈 배열이며 본문에 RPT-번호를 쓰지 않는다.
+- 실제 RAG Tool에서 반환된 출처만 사용한다.
+- source_ids에 넣은 모든 출처(예: "RPT-63")는 answer 본문 안에도 반드시 [RPT-63] 형식으로 직접 포함해야 한다. ("보고서 63"만 쓰면 계약 위반이며, 반드시 "[RPT-63]" 문자열이 answer 안에 들어가야 한다.)
+- 본문에 인용한 RPT-번호 집합과 source_ids 배열은 중복 없이 정확히 일치해야 한다.
+- 상태 조회만 수행한 경우 source_ids는 빈 배열([])이며 answer 본문에 RPT-번호를 절대 쓰지 않는다.
 - 실제 DB 상태 값은 서버가 별도로 붙인다. answer에 상태 값을 반복하거나 임의로 생성하지 않는다.
 
 [최종 출력 계약]
@@ -46,9 +47,16 @@ Tool 호출을 모두 완료한 후 ModelAnswer 스키마에 맞게 반환한다
 
 def make_model(settings):
     if not settings.llm_configured:
-        raise ServiceError('LLM_UNAVAILABLE','not_configured')
+        raise ServiceError('LLM_UNAVAILABLE', 'not_configured')
     # SDK 자동 재시도를 끈다. 인증/429/timeout은 안전한 오류로 보고한다.
-    return ChatOpenAI(model=settings.llm_model,api_key=settings.api_key,timeout=settings.llm_timeout_seconds,max_retries=0,max_tokens=1200)
+    return ChatOpenAI(
+        model=settings.llm_model,
+        api_key=settings.api_key,
+        timeout=settings.llm_timeout_seconds,
+        max_retries=0,
+        max_tokens=1200,
+        temperature=0,
+    )
 
 class AgentService:
     def __init__(self,settings,repo,pipeline,model_factory=None):
